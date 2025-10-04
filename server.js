@@ -34,12 +34,11 @@ app.use('/blog', createProxyMiddleware({
     const blogHost = new URL(BLOG_URL).host;
     proxyReq.setHeader('host', blogHost);
     
-    // Add WordPress admin headers
-    if (req.path && req.path.includes('/wp-admin')) {
-      proxyReq.setHeader('X-Forwarded-Proto', 'https');
-      proxyReq.setHeader('X-Forwarded-Host', 'vfms-aa2w.onrender.com');
-      proxyReq.setHeader('X-Forwarded-For', req.ip || req.connection.remoteAddress);
-    }
+    // Add WordPress admin headers for all requests
+    proxyReq.setHeader('X-Forwarded-Proto', 'https');
+    proxyReq.setHeader('X-Forwarded-Host', 'vfms-aa2w.onrender.com');
+    proxyReq.setHeader('X-Forwarded-For', req.ip || req.connection.remoteAddress);
+    proxyReq.setHeader('X-Forwarded-Port', '443');
   },
   onProxyRes: (proxyRes, req, res) => {
     // Update any absolute URLs in the response
