@@ -41,22 +41,31 @@ app.use('/blog', createProxyMiddleware({
     proxyReq.setHeader('X-Forwarded-Port', '443');
   },
   onProxyRes: (proxyRes, req, res) => {
+    // Debug logging
+    console.log(`Blog proxy response status: ${proxyRes.statusCode}`);
+    console.log(`Blog proxy response headers:`, proxyRes.headers);
+    
     // Update any absolute URLs in the response
     let body = '';
     proxyRes.on('data', (chunk) => {
       body += chunk;
     });
     proxyRes.on('end', () => {
-      // Replace WordPress URLs with /blog URLs
+      console.log(`Total response body size: ${body.length}`);
+      console.log(`Response body preview: ${body.substring(0, 100)}...`);
+      // Replace WordPress URLs with /blog URLs for all content
       body = body.replace(new RegExp(BLOG_URL.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), '/blog');
+      
+      // Fix all WordPress asset URLs
+      body = body.replace(/\/wp-includes/g, '/blog/wp-includes');
+      body = body.replace(/\/wp-content/g, '/blog/wp-content');
+      body = body.replace(/\/wp-json/g, '/blog/wp-json');
       
       // Additional WordPress admin fixes
       if (req.path && req.path.includes('/wp-admin')) {
         // Fix admin URLs
         body = body.replace(/\/wp-admin/g, '/blog/wp-admin');
         body = body.replace(/\/wp-login\.php/g, '/blog/wp-login.php');
-        body = body.replace(/\/wp-json/g, '/blog/wp-json');
-        body = body.replace(/\/wp-includes/g, '/blog/wp-includes');
         
         // Fix AJAX URLs
         body = body.replace(/ajaxurl\s*:\s*['"][^'"]*['"]/g, 'ajaxurl: "/blog/wp-admin/admin-ajax.php"');
